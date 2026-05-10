@@ -1,0 +1,552 @@
+class MathGame {
+    constructor() {
+        this.score = 0;
+        this.questionNumber = 0;
+        this.currentQuestion = null;
+        this.winThreshold = 10;
+
+        this.questionElement = document.getElementById('question');
+        this.questionTypeElement = document.getElementById('questionType');
+        this.hintElement = document.getElementById('hint');
+        this.answerInput = document.getElementById('answerInput');
+        this.submitBtn = document.getElementById('submitBtn');
+        this.scoreElement = document.getElementById('score');
+        this.questionCounter = document.getElementById('questionCounter');
+        this.feedbackElement = document.getElementById('feedback');
+        this.gameContent = document.getElementById('gameContent');
+        this.winScreen = document.getElementById('winScreen');
+        this.restartBtn = document.getElementById('restartBtn');
+
+        this.setupEventListeners();
+        this.generateQuestion();
+    }
+
+    setupEventListeners() {
+        this.submitBtn.addEventListener('click', () => this.checkAnswer());
+        this.answerInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.checkAnswer();
+        });
+        this.restartBtn.addEventListener('click', () => this.restart());
+    }
+
+    generateQuestion() {
+        this.questionNumber++;
+        const questionTypes = [
+            'arithmetic',
+            'fractions',
+            'decimals',
+            'probability',
+            'rounding',
+            'square',
+            'wordproblem',
+            'area'
+        ];
+        const type = this.randomChoice(questionTypes);
+
+        switch (type) {
+            case 'arithmetic':
+                this.generateArithmeticQuestion();
+                break;
+            case 'fractions':
+                this.generateFractionQuestion();
+                break;
+            case 'decimals':
+                this.generateDecimalQuestion();
+                break;
+            case 'probability':
+                this.generateProbabilityQuestion();
+                break;
+            case 'rounding':
+                this.generateRoundingQuestion();
+                break;
+            case 'square':
+                this.generateSquareQuestion();
+                break;
+            case 'wordproblem':
+                this.generateWordProblemQuestion();
+                break;
+            case 'area':
+                this.generateAreaQuestion();
+                break;
+        }
+
+        this.displayQuestion();
+    }
+
+    generateArithmeticQuestion() {
+        const grade = this.randomInt(1, 4);
+        let num1, num2, operator;
+
+        if (grade === 1) {
+            operator = this.randomChoice(['+', '-']);
+            num1 = this.randomInt(1, 10);
+            num2 = this.randomInt(1, 10);
+            if (operator === '-' && num2 > num1) [num1, num2] = [num2, num1];
+        } else if (grade === 2) {
+            operator = this.randomChoice(['+', '-', '*']);
+            if (operator === '*') {
+                num1 = this.randomInt(1, 10);
+                num2 = this.randomInt(1, 10);
+            } else {
+                num1 = this.randomInt(1, 50);
+                num2 = this.randomInt(1, 50);
+                if (operator === '-' && num2 > num1) [num1, num2] = [num2, num1];
+            }
+        } else if (grade === 3) {
+            operator = this.randomChoice(['+', '-', '*', '/']);
+            if (operator === '*') {
+                num1 = this.randomInt(1, 12);
+                num2 = this.randomInt(1, 12);
+            } else if (operator === '/') {
+                num2 = this.randomInt(1, 12);
+                num1 = num2 * this.randomInt(1, 10);
+            } else {
+                num1 = this.randomInt(1, 100);
+                num2 = this.randomInt(1, 100);
+                if (operator === '-' && num2 > num1) [num1, num2] = [num2, num1];
+            }
+        } else {
+            operator = this.randomChoice(['+', '-', '*', '/']);
+            if (operator === '*') {
+                num1 = this.randomInt(5, 20);
+                num2 = this.randomInt(2, 15);
+            } else if (operator === '/') {
+                num2 = this.randomInt(2, 15);
+                num1 = num2 * this.randomInt(2, 15);
+            } else {
+                num1 = this.randomInt(1, 200);
+                num2 = this.randomInt(1, 200);
+                if (operator === '-' && num2 > num1) [num1, num2] = [num2, num1];
+            }
+        }
+
+        let question;
+        let answer;
+        if (operator === '+') {
+            answer = num1 + num2;
+            question = `${num1} + ${num2} = ?`;
+        } else if (operator === '-') {
+            answer = num1 - num2;
+            question = `${num1} - ${num2} = ?`;
+        } else if (operator === '*') {
+            answer = num1 * num2;
+            question = `${num1} × ${num2} = ?`;
+        } else {
+            answer = num1 / num2;
+            question = `${num1} ÷ ${num2} = ?`;
+        }
+
+        this.currentQuestion = {
+            type: 'arithmetic',
+            question,
+            answer,
+            answerType: 'number'
+        };
+    }
+
+    generateFractionQuestion() {
+        const subtype = this.randomChoice(['add', 'subtract', 'multiply', 'divide', 'simplify', 'convert', 'bodmas']);
+        let question;
+        let answer;
+
+        if (subtype === 'simplify') {
+            const num = this.randomInt(2, 10) * this.randomInt(2, 5);
+            const den = this.randomInt(2, 10) * this.randomInt(2, 5);
+            const reduced = this.reduceFraction(num, den);
+            question = `Simplify ${num}/${den} to a reduced fraction.`;
+            answer = reduced;
+        } else if (subtype === 'convert') {
+            const choice = this.randomChoice(['percent', 'decimal']);
+            if (choice === 'percent') {
+                const options = [25, 50, 75];
+                const value = this.randomChoice(options);
+                question = `Convert ${value}% to a reduced fraction.`;
+                const num = value;
+                const den = 100;
+                answer = this.reduceFraction(num, den);
+            } else {
+                const options = [{ num: 1, den: 2 }, { num: 1, den: 4 }, { num: 3, den: 4 }, { num: 2, den: 5 }];
+                const chosen = this.randomChoice(options);
+                question = `Convert ${chosen.num}/${chosen.den} to a reduced fraction.`;
+                answer = this.reduceFraction(chosen.num, chosen.den);
+            }
+        } else if (subtype === 'bodmas') {
+            const f1 = this.getFraction(this.randomInt(1, 5), this.randomInt(2, 8));
+            const f2 = this.getFraction(this.randomInt(1, 5), this.randomInt(2, 8));
+            const f3 = this.getFraction(this.randomInt(1, 5), this.randomInt(2, 8));
+            const sum = this.addFractions(f1, f2);
+            const result = this.multiplyFractions(sum, f3);
+            question = `Use BODMAS: (${f1.num}/${f1.den} + ${f2.num}/${f2.den}) × ${f3.num}/${f3.den} = ?`;
+            answer = this.reduceFraction(result.num, result.den);
+        } else {
+            const fraction1 = this.getFraction(this.randomInt(1, 7), this.randomInt(2, 10));
+            const fraction2 = this.getFraction(this.randomInt(1, 7), this.randomInt(2, 10));
+
+            if (subtype === 'add') {
+                answer = this.addFractions(fraction1, fraction2);
+                question = `What is ${fraction1.num}/${fraction1.den} + ${fraction2.num}/${fraction2.den}?`;
+            } else if (subtype === 'subtract') {
+                if (this.compareFractions(fraction2, fraction1) > 0) {
+                    [fraction1, fraction2] = [fraction2, fraction1];
+                }
+                answer = this.subtractFractions(fraction1, fraction2);
+                question = `What is ${fraction1.num}/${fraction1.den} - ${fraction2.num}/${fraction2.den}?`;
+            } else if (subtype === 'multiply') {
+                answer = this.multiplyFractions(fraction1, fraction2);
+                question = `What is ${fraction1.num}/${fraction1.den} × ${fraction2.num}/${fraction2.den}?`;
+            } else {
+                answer = this.divideFractions(fraction1, fraction2);
+                question = `What is ${fraction1.num}/${fraction1.den} ÷ ${fraction2.num}/${fraction2.den}?`;
+            }
+        }
+
+        if (answer && typeof answer === 'object') {
+            answer = this.reduceFraction(answer.num, answer.den);
+        }
+
+        this.currentQuestion = {
+            type: 'fractions',
+            question: `${question} Answer in a reduced fraction form.`,
+            answer,
+            answerType: 'fraction'
+        };
+    }
+
+    generateDecimalQuestion() {
+        const mode = this.randomChoice(['add', 'subtract', 'multiply', 'round']);
+        const dec1 = (Math.random() * 100).toFixed(2);
+        const dec2 = (Math.random() * 100).toFixed(2);
+        let question;
+        let answer;
+
+        if (mode === 'add') {
+            answer = (parseFloat(dec1) + parseFloat(dec2)).toFixed(2);
+            question = `${dec1} + ${dec2} = ?`;
+        } else if (mode === 'subtract') {
+            answer = (parseFloat(dec1) - parseFloat(dec2)).toFixed(2);
+            question = `${dec1} - ${dec2} = ?`;
+        } else if (mode === 'multiply') {
+            answer = (parseFloat(dec1) * parseFloat(dec2)).toFixed(2);
+            question = `${dec1} × ${dec2} = ?`;
+        } else {
+            const num = (Math.random() * 100).toFixed(3);
+            answer = (Math.round(parseFloat(num) * 10) / 10).toFixed(1);
+            question = `Round ${num} to the nearest tenth = ?`;
+        }
+
+        this.currentQuestion = {
+            type: 'decimals',
+            question,
+            answer: parseFloat(answer),
+            answerType: 'number'
+        };
+    }
+
+    generateProbabilityQuestion() {
+        const type = this.randomChoice(['coin', 'die', 'bag']);
+        let question;
+        let answer;
+
+        switch (type) {
+            case 'coin':
+                question = 'What is the probability of flipping a coin and getting heads?';
+                answer = this.reduceFraction(1, 2);
+                break;
+            case 'die':
+                const face = this.randomInt(1, 6);
+                question = `What is the probability of rolling a ${face} on a six-sided die?`;
+                answer = this.reduceFraction(1, 6);
+                break;
+            default:
+                question = 'What is the probability of drawing a red ball from a bag with 2 red and 4 blue balls?';
+                answer = this.reduceFraction(2, 6);
+                break;
+        }
+
+        this.currentQuestion = {
+            type: 'probability',
+            question: `${question} Answer as a reduced fraction.`,
+            answer,
+            answerType: 'fraction'
+        };
+    }
+
+    generateRoundingQuestion() {
+        const decimals = (Math.random() * 200).toFixed(2);
+        const place = this.randomChoice(['whole number', 'tenth', 'hundredth']);
+        let answer;
+        let question;
+
+        if (place === 'whole number') {
+            answer = Math.round(parseFloat(decimals));
+        } else if (place === 'tenth') {
+            answer = Math.round(parseFloat(decimals) * 10) / 10;
+        } else {
+            answer = Math.round(parseFloat(decimals) * 100) / 100;
+        }
+
+        question = `Round ${decimals} to the nearest ${place} = ?`;
+
+        this.currentQuestion = {
+            type: 'rounding',
+            question,
+            answer,
+            answerType: 'number'
+        };
+    }
+
+    generateSquareQuestion() {
+        const number = this.randomInt(2, 20);
+        const type = this.randomChoice(['square', 'sqrt']);
+        let question;
+        let answer;
+
+        if (type === 'square') {
+            question = `What is ${number} squared?`;
+            answer = number * number;
+        } else {
+            const square = number * number;
+            question = `What is the square root of ${square}?`;
+            answer = number;
+        }
+
+        this.currentQuestion = {
+            type: 'square',
+            question,
+            answer,
+            answerType: 'number'
+        };
+    }
+
+    generateWordProblemQuestion() {
+        const problems = [
+            {
+                question: 'Sam has 5 boxes with 6 pencils in each box. How many pencils does he have in total?',
+                answer: 30
+            },
+            {
+                question: 'Lina has 4 baskets with 8 apples in each basket. How many apples does she have?',
+                answer: 32
+            },
+            {
+                question: 'If 3 children each eat 4 cookies, how many cookies were eaten? ',
+                answer: 12
+            },
+            {
+                question: 'There are 7 rows of chairs with 5 chairs in each row. How many chairs are there?',
+                answer: 35
+            }
+        ];
+
+        const chosen = this.randomChoice(problems);
+        this.currentQuestion = {
+            type: 'wordproblem',
+            question: chosen.question,
+            answer: chosen.answer,
+            answerType: 'number'
+        };
+    }
+
+    generateAreaQuestion() {
+        const type = this.randomChoice(['rectangle', 'circle', 'triangle']);
+        let question;
+        let answer;
+
+        if (type === 'rectangle') {
+            const length = this.randomInt(2, 12);
+            const width = this.randomInt(2, 12);
+            question = `What is the area of a rectangle with length ${length} and width ${width}?`;
+            answer = length * width;
+        } else if (type === 'circle') {
+            const radius = this.randomInt(2, 8);
+            question = `What is the area of a circle with radius ${radius}? Use π and round to 2 decimals.`;
+            answer = parseFloat((Math.PI * radius * radius).toFixed(2));
+        } else {
+            const base = this.randomInt(2, 12);
+            const height = this.randomInt(2, 12);
+            question = `What is the area of a triangle with base ${base} and height ${height}? Round to 2 decimals.`;
+            answer = parseFloat(((base * height) / 2).toFixed(2));
+        }
+
+        this.currentQuestion = {
+            type: 'area',
+            question,
+            answer,
+            answerType: 'number'
+        };
+    }
+
+    displayQuestion() {
+        this.questionTypeElement.textContent = this.getQuestionTypeLabel(this.currentQuestion.type);
+        this.questionElement.textContent = this.currentQuestion.question;
+        this.questionCounter.textContent = `Question ${this.questionNumber}`;
+        this.answerInput.value = '';
+        this.feedbackElement.textContent = '';
+        this.feedbackElement.className = 'feedback';
+        this.hintElement.textContent = this.currentQuestion.answerType === 'fraction'
+            ? 'Answer with a reduced fraction, like 3/4.'
+            : 'Enter your answer, then press Submit or Enter.';
+        this.answerInput.focus();
+    }
+
+    getQuestionTypeLabel(type) {
+        const labels = {
+            arithmetic: '📐 Basic Arithmetic',
+            fractions: '📊 Fractions',
+            decimals: '🔢 Decimals',
+            probability: '🎲 Probability',
+            rounding: '📏 Rounding Numbers',
+            square: '✖️ Squares & Square Roots',
+            wordproblem: '🧠 Word Problem',
+            area: '📏 Area of Shapes'
+        };
+        return labels[type] || type;
+    }
+
+    checkAnswer() {
+        const userAnswer = this.answerInput.value.trim();
+        if (!userAnswer) {
+            this.showFeedback('Please enter an answer!', false);
+            return;
+        }
+
+        let isCorrect = false;
+        if (this.currentQuestion.answerType === 'fraction') {
+            isCorrect = this.checkFractionAnswer(userAnswer, this.currentQuestion.answer);
+        } else {
+            const userNumber = parseFloat(userAnswer);
+            isCorrect = this.compareNumbers(userNumber, this.currentQuestion.answer);
+        }
+
+        if (isCorrect) {
+            this.score++;
+            this.scoreElement.textContent = this.score;
+            this.showFeedback('✓ Correct!', true);
+            if (this.score === this.winThreshold) {
+                setTimeout(() => this.showWinScreen(), 1200);
+            } else {
+                setTimeout(() => this.generateQuestion(), 1200);
+            }
+        } else {
+            this.showCorrectAnswer();
+        }
+    }
+
+    checkFractionAnswer(userAnswer, expected) {
+        const normalized = this.normalizeFraction(userAnswer);
+        if (!normalized) return false;
+        const reduced = this.reduceFraction(normalized.num, normalized.den);
+        return reduced.num === expected.num && reduced.den === expected.den;
+    }
+
+    normalizeFraction(answer) {
+        if (answer.includes('/')) {
+            const parts = answer.split('/').map(part => part.trim());
+            if (parts.length !== 2) return null;
+            const num = parseInt(parts[0], 10);
+            const den = parseInt(parts[1], 10);
+            if (Number.isNaN(num) || Number.isNaN(den) || den === 0) return null;
+            return { num, den };
+        }
+
+        const decimal = parseFloat(answer);
+        if (Number.isNaN(decimal)) return null;
+
+        for (let den = 1; den <= 100; den++) {
+            const num = Math.round(decimal * den);
+            if (Math.abs(decimal - num / den) < 0.0001) {
+                return this.reduceFraction(num, den);
+            }
+        }
+
+        return null;
+    }
+
+    compareNumbers(userNumber, expected) {
+        if (Number.isNaN(userNumber)) return false;
+        return Math.abs(userNumber - expected) < 0.0001;
+    }
+
+    showCorrectAnswer() {
+        let correctAnswerText;
+        if (this.currentQuestion.answerType === 'fraction') {
+            correctAnswerText = `${this.currentQuestion.answer.num}/${this.currentQuestion.answer.den}`;
+        } else if (typeof this.currentQuestion.answer === 'number' && !Number.isInteger(this.currentQuestion.answer)) {
+            correctAnswerText = this.currentQuestion.answer.toFixed(2);
+        } else {
+            correctAnswerText = this.currentQuestion.answer.toString();
+        }
+        this.showFeedback(`✗ Incorrect. The correct answer is: ${correctAnswerText}`, false);
+        setTimeout(() => this.generateQuestion(), 2200);
+    }
+
+    showFeedback(message, isCorrect) {
+        this.feedbackElement.textContent = message;
+        this.feedbackElement.className = isCorrect ? 'feedback correct' : 'feedback incorrect';
+    }
+
+    showWinScreen() {
+        this.gameContent.style.display = 'none';
+        this.winScreen.style.display = 'flex';
+    }
+
+    restart() {
+        this.score = 0;
+        this.questionNumber = 0;
+        this.scoreElement.textContent = '0';
+        this.gameContent.style.display = 'block';
+        this.winScreen.style.display = 'none';
+        this.generateQuestion();
+    }
+
+    getFraction(num, den) {
+        return { num, den: den === 0 ? 1 : den };
+    }
+
+    addFractions(a, b) {
+        return this.reduceFraction(a.num * b.den + b.num * a.den, a.den * b.den);
+    }
+
+    subtractFractions(a, b) {
+        return this.reduceFraction(a.num * b.den - b.num * a.den, a.den * b.den);
+    }
+
+    multiplyFractions(a, b) {
+        return this.reduceFraction(a.num * b.num, a.den * b.den);
+    }
+
+    divideFractions(a, b) {
+        return this.reduceFraction(a.num * b.den, a.den * b.num);
+    }
+
+    compareFractions(a, b) {
+        return a.num * b.den - b.num * a.den;
+    }
+
+    reduceFraction(num, den) {
+        const gcdValue = this.gcd(Math.abs(num), Math.abs(den));
+        num /= gcdValue;
+        den /= gcdValue;
+        if (den < 0) {
+            num = -num;
+            den = -den;
+        }
+        return { num, den };
+    }
+
+    gcd(a, b) {
+        return b === 0 ? a : this.gcd(b, a % b);
+    }
+
+    randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    randomChoice(array) {
+        return array[this.randomInt(0, array.length - 1)];
+    }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    new MathGame();
+});
